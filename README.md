@@ -46,8 +46,10 @@ Options are the following:
 * __hostip:__ IP address of the GrayLog2 server
 * __hostport:__ Port number that GrayLog2 server is listening on
 * __facility:__ The graylog2 facility to send log messages
+* __AdditionalFields:__ Any additional fields to add to every message (see below)
 
-###Code
+### Code
+
 ```c#
 //excerpt from ConsoleRunner
 var eventInfo = new LogEventInfo
@@ -59,6 +61,64 @@ eventInfo.Properties.Add("Publisher", comic.Publisher);
 eventInfo.Properties.Add("ReleaseDate", comic.ReleaseDate);
 Logger.Log(eventInfo);
 ```
+
+## Additional Properties
+
+There are several ways that additional properties can be added to a log.
+
+### Configuration
+
+Any static information can be set through configuration by adding a comma-separated list of key:value pairs.
+
+```
+	  <target name="graylog" 
+			  xsi:type="graylog" 
+			  hostip="192.168.1.7" 
+			  hostport="12201" 
+			  facility="console-runner"
+			  AdditionalFields="app:RandomSentence,version:1.0"
+	  />
+```
+
+This will add the following fields to your GELF log:
+
+```
+{
+    ...
+	"_app":"RandomSentence",
+	"_version":"1.0",
+	...
+}
+```
+
+You can also use your own custom field and key/value separators to deal with the case when the additional fields contain commas or colons
+```
+	  <target name="graylog" 
+			  xsi:type="graylog" 
+			  hostip="192.168.1.7" 
+			  hostport="12201" 
+			  facility="console-runner"
+			  AdditionalFields="app¬:¬RandomSentence¬|¬version¬:¬1.0"
+			  FieldSeparator="¬|¬"
+			  KeyValueSeparator="¬:¬"
+	  />
+```
+
+### LogEventInfo Properties
+
+You can use `LogEventInfo.Properties` to log additional fields to the output. Here is an example from the `ConsoleRunner`:
+
+```c#
+//excerpt from ConsoleRunner
+var eventInfo = new LogEventInfo {
+					Message = comic.Title,
+					Level = LogLevel.Info,
+				};
+eventInfo.Properties.Add("Publisher", comic.Publisher);
+eventInfo.Properties.Add("ReleaseDate", comic.ReleaseDate);
+Logger.Log(eventInfo);
+```
+
 
 [NLog]: http://nlog-project.org/
 [GrayLog2]: http://graylog2.org/
