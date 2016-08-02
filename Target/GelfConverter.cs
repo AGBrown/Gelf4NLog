@@ -12,7 +12,7 @@ namespace Gelf4NLog.Target
         private const int ShortMessageMaxLength = 250;
         private const string GelfVersion = "1.0";
 
-        public JObject GetGelfJson(LogEventInfo logEventInfo, string facility)
+        public JObject GetGelfJson(LogEventInfo logEventInfo, string facility, string additionalFields = null, string fieldSeparator = null, string keyValueSeparator = null)
         {
             //Retrieve the formatted message from LogEventInfo
             var logEventMessage = logEventInfo.FormattedMessage;
@@ -24,6 +24,21 @@ namespace Gelf4NLog.Target
                 logEventInfo.Properties.Add("ExceptionSource", logEventInfo.Exception.Source);
                 logEventInfo.Properties.Add("ExceptionMessage", logEventInfo.Exception.Message);
                 logEventInfo.Properties.Add("StackTrace", logEventInfo.Exception.StackTrace);
+            }
+
+            if (!String.IsNullOrWhiteSpace(additionalFields))
+            {
+                var sep = String.IsNullOrEmpty(fieldSeparator) ? "," : fieldSeparator;
+                var kvps = additionalFields.Split(new[] { sep }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < kvps.Length; i++)
+                {
+                    var kvp = kvps[i];
+                    if (String.IsNullOrWhiteSpace(kvp)) continue;
+                    var kvsep = String.IsNullOrEmpty(keyValueSeparator) ? ":" : keyValueSeparator;
+                    var kvpa = kvp.Split(new[] { kvsep }, StringSplitOptions.RemoveEmptyEntries);
+                    if (String.IsNullOrWhiteSpace(kvpa[0])) continue;
+                    logEventInfo.Properties.Add(kvpa[0], kvpa.Length < 2 ? "" : kvpa[1]);
+                }
             }
 
             //Figure out the short message
